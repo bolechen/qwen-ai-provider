@@ -1,6 +1,5 @@
-/* eslint-disable array-callback-return */
 import type {
-  LanguageModelV1Prompt,
+  LanguageModelV2Prompt,
 } from "@ai-sdk/provider"
 import {
   InvalidPromptError,
@@ -8,10 +7,10 @@ import {
 } from "@ai-sdk/provider"
 
 /**
- * Converts a LanguageModelV1Prompt into a Qwen completion prompt.
+ * Converts a LanguageModelV2Prompt into a Qwen completion prompt.
  *
  * @param options - The configuration options
- * @param options.prompt - The input prompt in LanguageModelV1Prompt format
+ * @param options.prompt - The input prompt in LanguageModelV2Prompt format
  * @param options.inputFormat - Either "prompt" (raw text input) or "messages" (chat messages)
  * @param options.user - Label for user messages (default: "user")
  * @param options.assistant - Label for assistant messages (default: "assistant")
@@ -27,7 +26,7 @@ export function convertToQwenCompletionPrompt({
   user = "user",
   assistant = "assistant",
 }: {
-  prompt: LanguageModelV1Prompt
+  prompt: LanguageModelV2Prompt
   inputFormat: "prompt" | "messages"
   user?: string
   assistant?: string
@@ -75,14 +74,15 @@ export function convertToQwenCompletionPrompt({
               case "text": {
                 return part.text
               }
-              case "image": {
-                // Images are not supported.
+              case "file": {
+                // Files (including images) are not supported.
                 throw new UnsupportedFunctionalityError({
-                  functionality: "images",
+                  functionality: "file content parts",
                 })
               }
               default: {
-                throw new Error(`Unsupported content part type: ${part.type}`)
+                const _exhaustiveCheck: never = part
+                throw new Error(`Unsupported content part type: ${_exhaustiveCheck}`)
               }
             }
           })
@@ -105,6 +105,18 @@ export function convertToQwenCompletionPrompt({
                 throw new UnsupportedFunctionalityError({
                   functionality: "tool-call messages",
                 })
+              }
+              case "file":
+              case "reasoning":
+              case "tool-result": {
+                // These content types are unsupported.
+                throw new UnsupportedFunctionalityError({
+                  functionality: `${part.type} messages`,
+                })
+              }
+              default: {
+                const _exhaustiveCheck: never = part
+                throw new Error(`Unsupported content part type: ${_exhaustiveCheck}`)
               }
             }
           })

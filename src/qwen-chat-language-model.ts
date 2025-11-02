@@ -1,11 +1,11 @@
 import type {
   APICallError,
   LanguageModelV2,
+  LanguageModelV2CallOptions,
   LanguageModelV2CallWarning,
+  LanguageModelV2Content,
   LanguageModelV2FinishReason,
   LanguageModelV2StreamPart,
-  LanguageModelV2Content,
-  LanguageModelV2CallOptions,
 } from "@ai-sdk/provider"
 import type {
   FetchFunction,
@@ -39,7 +39,6 @@ import { mapQwenFinishReason } from "./map-qwen-finish-reason"
 import {
   defaultQwenErrorStructure,
 } from "./qwen-error"
-import { prepareTools } from "./qwen-prepare-tools"
 
 /**
  * Configuration for the Qwen Chat Language Model.
@@ -173,7 +172,7 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
    * @returns An object containing the arguments and warnings
    */
   private getArgs({
-      prompt,
+    prompt,
       maxOutputTokens,
       temperature,
       topP,
@@ -211,10 +210,10 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
     }
 
     // Convert V2 tools to OpenAI format
-    const openaiTools = tools?.map(tool => {
-      if (tool.type === 'function') {
+    const openaiTools = tools?.map((tool) => {
+      if (tool.type === "function") {
         return {
-          type: 'function' as const,
+          type: "function" as const,
           function: {
             name: tool.name,
             description: tool.description,
@@ -227,17 +226,20 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
     }).filter((t): t is NonNullable<typeof t> => t !== null)
 
     // Convert V2 tool choice to OpenAI format
-    let openaiToolChoice: any = undefined
+    let openaiToolChoice: any
     if (toolChoice) {
-      if (toolChoice.type === 'auto') {
-        openaiToolChoice = 'auto'
-      } else if (toolChoice.type === 'none') {
-        openaiToolChoice = 'none'
-      } else if (toolChoice.type === 'required') {
-        openaiToolChoice = 'required'
-      } else if (toolChoice.type === 'tool') {
+      if (toolChoice.type === "auto") {
+        openaiToolChoice = "auto"
+      }
+      else if (toolChoice.type === "none") {
+        openaiToolChoice = "none"
+      }
+      else if (toolChoice.type === "required") {
+        openaiToolChoice = "required"
+      }
+      else if (toolChoice.type === "tool") {
         openaiToolChoice = {
-          type: 'function',
+          type: "function",
           function: { name: toolChoice.toolName },
         }
       }
@@ -329,7 +331,7 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
     // Add reasoning content if present
     if (choice.message.reasoning_content) {
       content.push({
-        type: 'reasoning',
+        type: "reasoning",
         text: choice.message.reasoning_content,
       })
     }
@@ -337,7 +339,7 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
     // Add text content if present
     if (choice.message.content) {
       content.push({
-        type: 'text',
+        type: "text",
         text: choice.message.content,
       })
     }
@@ -346,7 +348,7 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
     if (choice.message.tool_calls) {
       for (const toolCall of choice.message.tool_calls) {
         content.push({
-          type: 'tool-call',
+          type: "tool-call",
           toolCallId: toolCall.id ?? generateId(),
           toolName: toolCall.function.name,
           input: toolCall.function.arguments!, // V2 uses string for input
@@ -359,8 +361,8 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
       content,
       finishReason: mapQwenFinishReason(choice.finish_reason),
       usage: {
-        inputTokens: responseBody.usage?.prompt_tokens,
-        outputTokens: responseBody.usage?.completion_tokens,
+        inputTokens: responseBody.usage?.prompt_tokens ?? undefined,
+        outputTokens: responseBody.usage?.completion_tokens ?? undefined,
         totalTokens: (responseBody.usage?.prompt_tokens ?? 0) + (responseBody.usage?.completion_tokens ?? 0) || undefined,
       },
       ...(providerMetadata && { providerMetadata }),
@@ -404,17 +406,19 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
 
           // Stream content parts
           for (const part of result.content) {
-            if (part.type === 'reasoning') {
+            if (part.type === "reasoning") {
               const id = generateId()
               controller.enqueue({ type: "reasoning-start", id })
               controller.enqueue({ type: "reasoning-delta", id, delta: part.text })
               controller.enqueue({ type: "reasoning-end", id })
-            } else if (part.type === 'text') {
+            }
+            else if (part.type === "text") {
               const id = generateId()
               controller.enqueue({ type: "text-start", id })
               controller.enqueue({ type: "text-delta", id, delta: part.text })
               controller.enqueue({ type: "text-end", id })
-            } else if (part.type === 'tool-call') {
+            }
+            else if (part.type === "tool-call") {
               controller.enqueue({
                 type: "tool-call",
                 toolCallId: part.toolCallId,
