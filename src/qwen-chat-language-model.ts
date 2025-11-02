@@ -157,6 +157,19 @@ export class QwenChatLanguageModel implements LanguageModelV2 {
    * Generates the arguments and warnings required for a language model generation call (V2).
    *
    * @param options - V2 call options
+   * @param options.prompt - The prompt messages for the model
+   * @param options.maxOutputTokens - Maximum number of tokens to generate
+   * @param options.temperature - Sampling temperature
+   * @param options.topP - Top-p sampling parameter
+   * @param options.topK - Top-k sampling parameter
+   * @param options.frequencyPenalty - Frequency penalty parameter
+   * @param options.presencePenalty - Presence penalty parameter
+   * @param options.providerOptions - Provider-specific options
+   * @param options.stopSequences - Sequences where the model will stop generating
+   * @param options.responseFormat - Expected format of the response
+   * @param options.seed - Random seed for reproducibility
+   * @param options.tools - Available tools for the model to use
+   * @param options.toolChoice - Tool choice configuration
    * @returns An object containing the arguments and warnings
    */
   private getArgs({

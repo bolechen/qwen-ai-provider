@@ -95,6 +95,11 @@ npm install qwen-ai-provider
 yarn add qwen-ai-provider
 ```
 
+### Zod Compatibility
+- Supports `zod` versions: `^3.25.0` or `^4.0.0`.
+- This package imports `z` from `zod` and uses only APIs compatible with both versions.
+- If you use structured outputs or tools with schemas, you can use either Zod v3.25+ or Zod v4 in your app.
+
 ## Provider Instance
 
 You can import the default provider instance `qwen` from `qwen-ai-provider`:
